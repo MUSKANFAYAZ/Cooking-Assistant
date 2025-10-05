@@ -1,0 +1,17 @@
+{
+  "name": "cooking-assistant",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c yellow,cyan \"npm --prefix backend start\" \"npm --prefix frontend run dev\"",
+    "dev:backend": "npm --prefix backend start",
+    "dev:frontend": "npm --prefix frontend run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}
