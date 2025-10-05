@@ -135,6 +135,24 @@
   }
 }
 
+.voice-command-hint {
+  font-size: 14px;
+  color: #f97316;
+  font-weight: 500;
+  font-style: italic;
+  margin-left: 10px;
+  animation: fadeInOut 2s infinite;
+}
+
+@keyframes fadeInOut {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .current-step {
   background-color: #fff3cd; /* Light yellow highlight */
   font-weight: 500;
@@ -233,6 +251,8 @@
 .voice-btn:active { transform: translateY(1px); }
 
 .voice-btn.start { background-color: #f97316; }
+.voice-btn.read-all { background-color: #3b82f6; }
+.voice-btn.read-all:hover { background-color: #2563eb; }
 .voice-btn.pause { background-color: #f59e0b; }
 .voice-btn.resume { background-color: #10b981; }
 .voice-btn.stop { background-color: #ef4444; }

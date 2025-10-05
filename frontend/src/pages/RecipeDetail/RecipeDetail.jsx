@@ -58,6 +58,18 @@ const RecipeDetailPage = () => {
             resetTranscript();
             return;
         }
+        if (t.includes('read instructions') || t.includes('read recipe') || t.includes('read all')) {
+            // Read out all recipe instructions
+            const allInstructions = recipeSteps.join('. ');
+            speak({
+                text: `Here are all the instructions for ${recipe?.strMeal || 'this recipe'}. ${allInstructions}`,
+                onEnd: () => {
+                    // After reading all instructions, user can give further commands
+                }
+            });
+            resetTranscript();
+            return;
+        }
         if (t.includes('pause')) {
             pause();
             resetTranscript();
@@ -92,7 +104,7 @@ const RecipeDetailPage = () => {
             resetTranscript();
             return;
         }
-    }, [transcript, recipeSteps, currentStep, pause, resume, stop, speak, resetTranscript]);
+    }, [transcript, recipeSteps, currentStep, pause, resume, stop, speak, resetTranscript, recipe]);
 
     // Logic to automatically speak the next step (auto-advance with no delay)
   useEffect(() => {
@@ -115,20 +127,27 @@ const RecipeDetailPage = () => {
   }, [currentStep, recipeSteps, speak, autoMode]);
 
   const activateAssistant = () => {
-    // Only start listening; do NOT speak a greeting to avoid extra audio
-    assistant.startListening();
+    // Start listening and provide clear voice instructions
+    if (!assistant.isListening) {
+      assistant.startListening();
+      speak({
+        text: `Voice assistant activated. You can say: start to begin cooking instructions, pause to pause, continue to resume, next for next step, previous for previous step, repeat to repeat current step, or stop to end. Say start to begin the recipe instructions.`,
+        onEnd: () => {
+          // Assistant is now ready for commands
+        }
+      });
+    }
   };
 
   // On-screen voice control buttons
   const handleStartClick = () => {
-    if (!assistant.isListening && typeof assistant.startListening === 'function') {
-      assistant.startListening();
-    }
-    setAutoMode(true);
+    // Do NOT start listening here to avoid any system chirp; just greet then read all
+    setAutoMode(false);
+    setCurrentStep(-1);
     speak({
-      text: 'Hello! Happy cooking. Starting instructions now.',
+      text: `Hello! Welcome to your cooking assistant. I'll now read out the recipe instructions for ${recipe?.strMeal || 'this recipe'}.`,
       onEnd: () => {
-        if (recipeSteps.length > 0) setCurrentStep(0);
+        readAllInstructions();
       },
     });
   };
@@ -138,6 +157,26 @@ const RecipeDetailPage = () => {
     stop();
     setAutoMode(false);
     setCurrentStep(-1);
+  };
+
+  // Helper to read all instructions without turning on the mic (no chirp)
+  const readAllInstructions = () => {
+    const allInstructions = recipeSteps.join('. ');
+    if (!allInstructions) {
+      speak({ text: 'There are no instructions for this recipe.' });
+      return;
+    }
+    speak({
+      text: `Here are all the instructions for ${recipe?.strMeal || 'this recipe'}. ${allInstructions}`,
+      onEnd: () => {
+        // Instructions completed
+      }
+    });
+  };
+
+  const handleReadAllClick = () => {
+    // Do not start listening; just read all to avoid any activation sounds
+    readAllInstructions();
   };
 
   // --- Data Fetching Logic (FIXED to use URL parameter) ---
@@ -244,13 +283,14 @@ const RecipeDetailPage = () => {
             )}
             {assistant.isListening && (
               <span className="voice-command-hint">
-                Say: "start", "pause", "continue", "repeat", or "stop"
+                Say: "start", "read instructions", "pause", "continue", "next", "previous", "repeat", or "stop"
               </span>
             )}
           </h2>
 
           <div className="voice-controls">
             <button className="voice-btn start" onClick={handleStartClick}>Start</button>
+            <button className="voice-btn read-all" onClick={handleReadAllClick}>Read All</button>
             <button className="voice-btn pause" onClick={handlePauseClick}>Pause</button>
             <button className="voice-btn resume" onClick={handleResumeClick}>Resume</button>
             <button className="voice-btn stop" onClick={handleStopClick}>Stop</button>

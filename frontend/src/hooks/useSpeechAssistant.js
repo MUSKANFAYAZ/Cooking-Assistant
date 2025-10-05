@@ -27,7 +27,21 @@ export const useSpeechAssistant = () => {
 
     recognition.onend = () => {
       if (isListening) {
-        recognition.start(); // Keep listening if it's supposed to be active
+        // Add a small delay before restarting to prevent audio artifacts
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (error) {
+            console.log('Speech recognition restart error:', error);
+          }
+        }, 100);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.log('Speech recognition error:', event.error);
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setIsListening(false);
       }
     };
     
@@ -40,7 +54,10 @@ export const useSpeechAssistant = () => {
     try { r.stop(); } catch {}
     try { r.abort(); } catch {}
     if (!isListening) setIsListening(true);
-    r.start();
+    // Add a small delay to prevent browser default sounds
+    setTimeout(() => {
+      r.start();
+    }, 100);
   };
 
   const stopListening = () => {
@@ -51,17 +68,30 @@ export const useSpeechAssistant = () => {
   };
   
   const speak = ({ text, onEnd }) => {
+    // Cancel any ongoing speech to prevent overlapping
     if (window.speechSynthesis.speaking) {
       window.speechSynthesis.cancel();
     }
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      if (onEnd) onEnd(); // Callback when speech finishes
-    };
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
+    
+    // Wait a moment for the cancellation to complete
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9; // Slightly slower for better comprehension
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        if (onEnd) onEnd();
+      };
+      utterance.onerror = (event) => {
+        console.log('Speech synthesis error:', event.error);
+        setIsSpeaking(false);
+      };
+      
+      window.speechSynthesis.speak(utterance);
+    }, 50);
   };
   
   const pause = () => window.speechSynthesis.pause();
