@@ -1,0 +1,58 @@
+.timers-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.timers-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  padding: 20px 0;
+}
+
+.add-timer-form {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom: 40px;
+}
+
+.timer-input {
+  flex-grow: 1;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+.timer-input.number {
+  flex-grow: 0;
+  width: 80px;
+}
+
+.add-button {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #f97316;
+  color: white;
+}
+
+.timers-list {
+  margin-top: 20px;
+}
+
+.no-timers-message {
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+  padding: 40px;
+}

@@ -1,0 +1,120 @@
+.search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  background-color: #fff; /* White background for the section */
+  width: 100%;
+}
+
+.search-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 25px;
+}
+
+/* Wrapper for the input, icon, and button */
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+  border: 1px solid #e0e0e0;
+  border-radius: 50px; /* Fully rounded corners for a pill shape */
+  padding-left: 15px;
+  overflow: hidden; /* Important for the button's corner */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.search-input-icon {
+  font-size: 22px;
+  color: #888;
+}
+
+.search-input {
+  flex-grow: 1; /* Takes up the available space */
+  border: none;
+  outline: none;
+  padding: 14px 10px;
+  font-size: 16px;
+  background-color: transparent;
+}
+.search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  background-color: #fff;
+  width: 100%;
+}
+
+.search-button {
+  background-color: #f97316; /* Orange */
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.search-button:hover {
+  background-color: #ea580c; /* Darker orange on hover */
+}
+
+/* Wrapper for the voice search elements */
+.voice-search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Space between text and button */
+  margin-top: 20px;
+}
+
+.voice-search-text {
+  font-size: 14px;
+  color: #666;
+}
+
+.voice-search-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #f97316;
+  border: none;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.voice-search-button:hover {
+  background-color: #ea580c;
+}
+
+.search-hint {
+  font-size: 14px;
+  color: #888;
+  margin-top: 20px;
+}
+
+.voice-search-button.listening {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+  }
+}

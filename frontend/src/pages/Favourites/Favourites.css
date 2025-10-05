@@ -1,0 +1,34 @@
+.favorites-page {
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 70px); /* Adjust based on navbar height */
+  padding-bottom: 40px;
+}
+
+.favorites-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  padding: 40px 20px 20px 20px;
+}
+
+.no-favorites-message {
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+  padding: 40px;
+}
+
+/* Re-using styles from Home.css for consistency */
+.recipe-list-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto; 
+  padding: 0 20px;
+}
+
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}

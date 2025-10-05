@@ -1,0 +1,56 @@
+.main-menu-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.main-menu-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  padding-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* Style for the new instruction text */
+.menu-instruction {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.alphabet-nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 40px;
+  padding: 10px;
+}
+
+.alpha-button {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.alpha-button:hover {
+  background-color: #f0f0f0;
+  border-color: #f97316;
+}
+
+.alpha-button.active {
+  background-color: #f97316;
+  color: white;
+  border-color: #f97316;
+  transform: scale(1.1);
+}

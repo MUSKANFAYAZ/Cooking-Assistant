@@ -1,0 +1,93 @@
+.home-page {
+  /* This ensures the page has a consistent background color */
+  background-color: #f8f9fa;
+}
+
+/* --- Filter Section Styles --- */
+.filter-section {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap; /* Allows buttons to wrap on smaller screens */
+  gap: 15px; /* Space between buttons */
+  padding: 20px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto; /* Centers the section */
+}
+
+.filter-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 50px; /* Pill shape */
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.filter-button:hover {
+  background-color: #f0f0f0;
+  border-color: #aaa;
+}
+
+/* Style for the currently active filter button */
+.filter-button.active {
+  background-color: #f97316; /* Orange theme color */
+  color: white;
+  border-color: #f97316;
+}
+
+/* --- Recipe List Section --- */
+.recipe-list-section {
+  width: 100%;
+  max-width: 1200px;
+  /* Use margin auto to center the recipe grid container */
+  margin: 0 auto;
+  padding: 0 20px 20px 20px; /* Adjusted padding */
+}
+
+.recipe-grid {
+  display: grid;
+  /* This creates a responsive grid that shows as many 280px cards as fit */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Loading and End-of-List Indicators */
+.loading-indicator,
+.end-of-list {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+  color: #555;
+  width: 100%;
+}
+
+/* Responsive adjustments for the grid */
+@media (max-width: 640px) {
+  .recipe-grid {
+    /* On smaller screens, you might want the cards to be a bit smaller */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+  .recipe-list-section {
+    padding: 0 15px 15px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recipe-grid {
+    /* On mobile, stack the cards in a single column */
+    grid-template-columns: 1fr;
+  }
+}
+
+.no-results-message {
+  text-align: center;
+  padding: 50px 20px;
+  font-size: 18px;
+  color: #666;
+  font-style: italic;
+  width: 100%;
+}

@@ -1,0 +1,88 @@
+.recipe-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+.recipe-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block; /* Ensures the link takes up the full card space */
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* This wrapper is crucial for positioning the favorite button */
+.card-image-wrapper {
+  position: relative;
+}
+
+.card-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover; /* Prevents the image from being stretched or skewed */
+  display: block;
+}
+
+.favorite-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.favorite-button:hover {
+  transform: scale(1.1);
+}
+
+.favorite-icon {
+  font-size: 18px;
+  color: #555;
+}
+
+.favorite-icon.favorited {
+  color: #e53e3e; /* Red color for a favorited item */
+}
+
+.card-content {
+  padding: 16px;
+  flex-grow: 1; /* Allows content to fill the space */
+}
+
+.card-cuisine {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f97316; /* Orange theme color */
+  text-transform: uppercase;
+  margin: 0 0 5px 0;
+}
+
+.card-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 10px 0;
+  line-height: 1.2;
+}
+
+.card-stores {
+  font-size: 14px;
+  color: #777;
+  margin: 0;
+}
