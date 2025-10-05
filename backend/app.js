@@ -14,7 +14,6 @@ var app = express();
 // --- MIDDLEWARE ---
 // 2. Use 'cors' at the very top of your middleware
 app.use(cors()); 
-app.use('/api/users', require('./routes/user.routes.js'));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -24,6 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- API ROUTES ---
 app.use('/api/auth', authRouter);
+app.use('/api/users', require('./routes/user.routes.js'));
 // app.use('/api/recipes', recipeRouter); // We'll use this later
 
 

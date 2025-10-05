@@ -4,7 +4,7 @@ import RecipeCard from '../../components/RecipeCard/RecipeCard';
 import './Favourites.css';
 
 const Favorites = () => {
-  const { favorites } = useFavorites();
+  const {favorites} = useFavorites();
 
   return (
     <div className="favorites-page">
@@ -13,7 +13,7 @@ const Favorites = () => {
         {favorites.length > 0 ? (
           <div className="recipe-grid">
             {favorites.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
+              <RecipeCard key={recipe._id} recipe={recipe} />
             ))}
           </div>
         ) : (

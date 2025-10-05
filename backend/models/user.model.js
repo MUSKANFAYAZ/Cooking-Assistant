@@ -6,9 +6,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 
-  favorites: [
-    { type: mongoose.Schema.Types.ObjectId, ref: 'Recipe', default: [] }
-  ],
+  favorites: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Recipe' }],
+    default: [],
+  },
   timers: { type: Array, default: [] },
 
 }, { timestamps: true });

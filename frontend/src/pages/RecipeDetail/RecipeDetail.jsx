@@ -13,153 +13,259 @@ const RecipeDetailPage = () => {
     // FIX 1: Get the ID and slug directly from the URL params.
     // Assuming your router path is now "/recipe/:mealDbId/:slug" (as recommended).
     // If your router path is "/recipe/:id/:slug", you need to alias the first param.
-    const { id: mealDbIdFromParams, slug } = useParams(); 
+    const { id: externalIdFromParams, slug } = useParams(); 
     
     // --- State and Context ---
     const [recipe, setRecipe] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const { isFavorited, addFavorite, removeFavorite } = useFavorites();
+    const { isFavorited, toggleFavorite } = useFavorites();
     
     // FIX 2: Prioritize the persistent ID from the URL parameters.
     // The mealDbIdFromState is ignored as it breaks on refresh.
-    const mealDbId = mealDbIdFromParams; 
-
+    const mealDbId = externalIdFromParams; 
     // Check favorite status for the current recipe using the persistent ID
     const isCurrentRecipeFavorited = mealDbId ? isFavorited(mealDbId) : false;
 
     // --- Voice Assistant Logic (Omitted for brevity, assumed correct) ---
     const [currentStep, setCurrentStep] = useState(-1);
+    const [autoMode, setAutoMode] = useState(false);
     const { transcript, speak, pause, resume, stop, resetTranscript, ...assistant } = useSpeechAssistant();
-
+    
+    // Build the instructions into an array of steps
     const recipeSteps = useMemo(() => {
         if (!recipe || !recipe.strInstructions) return [];
-        return recipe.strInstructions.split('. ').filter(s => s.trim().length > 0);
+        // Split by newlines or sentence periods that are followed by a space and a capital letter
+        const parts = recipe.strInstructions
+          .split(/\r?\n+|\.\s+(?=[A-Z])/)
+          .map(s => s.trim())
+          // drop empty lines, lone numbers like "1." or "2", and single punctuation
+          .filter(s => s && !/^\d+\.?$/.test(s) && !/^[\-•]$/.test(s));
+        return parts;
     }, [recipe]);
 
-    // Command processing logic (Correct as is)
-    useEffect(() => { /* ... */ }, [transcript, recipeSteps, currentStep, pause, resume, stop, speak, resetTranscript]);
-
-    // Logic to automatically speak the next step (Correct as is)
-    useEffect(() => { /* ... */ }, [currentStep, recipeSteps, speak]);
-
-    const activateAssistant = () => {
-        assistant.startListening();
-        speak({ text: "Hello... Happy cooking! Say 'start' to begin." });
-    };
-
-    // --- Data Fetching Logic (FIXED to use URL parameter) ---
+    // Voice command processing: start, pause, continue, stop, next, previous, repeat
     useEffect(() => {
-        if (!mealDbId) {
-            // This error now only occurs if the URL itself is malformed.
-            setError('Recipe ID is missing from the URL. Please verify the link or navigate from the home page.');
-            setLoading(false);
+        if (!transcript) return;
+        const t = transcript.toLowerCase();
+
+        if (t.includes('start')) {
+            if (recipeSteps.length > 0) {
+                setAutoMode(true);
+                setCurrentStep(0);
+            }
+            resetTranscript();
             return;
         }
-
-        const getRecipeDetails = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                // Fetch using the persistent ID from the URL parameter
-                const recipeData = await fetchRecipeById(mealDbId);
-                
-                if (recipeData) {
-                    setRecipe(recipeData);
-                } else {
-                    setError('Recipe details could not be found.');
-                }
-            } catch (err) {
-                setError('Failed to fetch recipe details from external API.');
-            } finally {
-                setLoading(false);
+        if (t.includes('pause')) {
+            pause();
+            resetTranscript();
+            return;
+        }
+        if (t.includes('continue') || t.includes('resume')) {
+            resume();
+            resetTranscript();
+            return;
+        }
+        if (t.includes('stop')) {
+            stop();
+            setAutoMode(false);
+            setCurrentStep(-1);
+            resetTranscript();
+            return;
+        }
+        if (t.includes('next')) {
+            if (currentStep + 1 < recipeSteps.length) setCurrentStep(currentStep + 1);
+            resetTranscript();
+            return;
+        }
+        if (t.includes('previous') || t.includes('back')) {
+            if (currentStep > 0) setCurrentStep(currentStep - 1);
+            resetTranscript();
+            return;
+        }
+        if (t.includes('repeat')) {
+            if (currentStep >= 0 && currentStep < recipeSteps.length) {
+                speak({ text: `Repeating step ${currentStep + 1}. ${recipeSteps[currentStep]}` });
             }
-        };
+            resetTranscript();
+            return;
+        }
+    }, [transcript, recipeSteps, currentStep, pause, resume, stop, speak, resetTranscript]);
 
-        getRecipeDetails();
-    }, [mealDbId]); // Dependency is now the persistent URL parameter
+    // Logic to automatically speak the next step (auto-advance with no delay)
+  useEffect(() => {
+    if (currentStep < 0) return;
+    if (!recipeSteps || currentStep >= recipeSteps.length) return;
+    const stepText = recipeSteps[currentStep];
 
-    // --- Favorites Toggle Handler (Correct as is) ---
-    const handleFavoriteToggle = () => {
-        if (!mealDbId) return; 
-
-        if (isCurrentRecipeFavorited) {
-            removeFavorite(mealDbId);
+    speak({
+      text: `Step ${currentStep + 1}. ${stepText}`,
+      onEnd: () => {
+        if (!autoMode) return;
+        const next = currentStep + 1;
+        if (next < recipeSteps.length) {
+          setCurrentStep(next);
         } else {
-            addFavorite(mealDbId); 
+          setAutoMode(false);
         }
+      }
+    });
+  }, [currentStep, recipeSteps, speak, autoMode]);
+
+  const activateAssistant = () => {
+    // Only start listening; do NOT speak a greeting to avoid extra audio
+    assistant.startListening();
+  };
+
+  // On-screen voice control buttons
+  const handleStartClick = () => {
+    if (!assistant.isListening && typeof assistant.startListening === 'function') {
+      assistant.startListening();
+    }
+    setAutoMode(true);
+    speak({
+      text: 'Hello! Happy cooking. Starting instructions now.',
+      onEnd: () => {
+        if (recipeSteps.length > 0) setCurrentStep(0);
+      },
+    });
+  };
+  const handlePauseClick = () => { pause(); };
+  const handleResumeClick = () => { resume(); };
+  const handleStopClick = () => {
+    stop();
+    setAutoMode(false);
+    setCurrentStep(-1);
+  };
+
+  // --- Data Fetching Logic (FIXED to use URL parameter) ---
+  useEffect(() => {
+    if (!mealDbId) {
+      // This error now only occurs if the URL itself is malformed.
+      setError('Recipe ID is missing from the URL. Please verify the link or navigate from the home page.');
+      setLoading(false);
+      return;
+    }
+
+    const getRecipeDetails = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch using the persistent ID from the URL parameter
+        const recipeData = await fetchRecipeById(mealDbId);
+        if (recipeData) {
+          setRecipe(recipeData);
+        } else {
+          setError('Recipe details could not be found.');
+        }
+      } catch (err) {
+        setError('Failed to fetch recipe details from external API.');
+      } finally {
+      }
     };
 
-    // Helper function to parse ingredients (Correct as is)
-    const getIngredients = (recipeData) => {
-        const ingredients = [];
-        for (let i = 1; i <= 20; i++) {
-            const ingredient = recipeData[`strIngredient${i}`];
-            const measure = recipeData[`strMeasure${i}`];
-            if (ingredient && ingredient.trim() !== '') {
-                ingredients.push(`${measure} ${ingredient}`);
-            }
-        }
-        return ingredients;
-    };
+    getRecipeDetails();
+  }, [mealDbId]); // Dependency is now the persistent URL parameter
 
-    if (loading) return <div className="loading-indicator">Loading recipe...</div>;
-    if (error) return <div className="error-indicator">{error}</div>;
+  // --- Favorites Toggle Handler ---
+  const handleFavoriteToggle = () => {
+    if (!mealDbId) return;
+    const payload = recipe ? {
+      id: mealDbId,
+      name: recipe.strMeal,
+      image: recipe.strMealThumb,
+      cuisine: recipe.strArea,
+      category: recipe.strCategory,
+    } : { id: mealDbId };
+
+    toggleFavorite(payload);
+  };
+
+  // Helper: build ingredients list from MealDB fields
+  const getIngredients = (recipeData) => {
+    if (!recipeData) return [];
+    const list = [];
+    for (let i = 1; i <= 20; i++) {
+      const ing = recipeData[`strIngredient${i}`];
+      const measure = recipeData[`strMeasure${i}`];
+      if (ing && ing.trim() !== '') {
+        const line = `${measure ? measure : ''} ${ing}`.trim();
+        list.push(line);
+      }
+    }
+    return list;
+  };
+
+  if (error) return <div className="error-indicator">{error}</div>;
     if (!recipe) return <p className="no-results-message">Recipe not found.</p>;
 
     // --- Full JSX to Render the Page ---
     return (
-        <div className="recipe-detail-page">
-            <div className="title-and-favorites">
-                <h1 className="recipe-title">{recipe.strMeal}</h1>
-                <button className="favorite-button-large" onClick={handleFavoriteToggle}>
-                    {isCurrentRecipeFavorited 
-                        ? <FaHeart className="favorite-icon favorited" size={30} /> 
-                        : <FaRegHeart className="favorite-icon" size={30} />
-                    }
-                </button>
-            </div>
-            
-            <div className="recipe-meta">
-                <span><strong>Category:</strong> {recipe.strCategory}</span>
-                <span><strong>Cuisine:</strong> {recipe.strArea}</span>
-            </div>
-            <div className="recipe-layout">
-                <img src={recipe.strMealThumb} alt={recipe.strMeal} className="recipe-image" referrerPolicy="no-referrer" />
-                <div className="recipe-ingredients">
-                    <h2>Ingredients</h2>
-                    <ul>
-                        {getIngredients(recipe).map((ing, index) => (
-                            <li key={index}>{ing}</li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-            <div className="recipe-instructions">
-                <h2>
-                    Instructions
-                    {assistant.hasSpeechSupport && (
-                        <button className={`mic-button ${assistant.isListening ? 'listening' : ''}`} onClick={activateAssistant} title="Activate Voice Assistant">
-                            <FaMicrophone />
-                        </button>
-                    )}
-                    {assistant.isListening && (
-                        <span className="voice-command-hint">
-                            Say: "start", "pause", "continue", "repeat", or "stop"
-                        </span>
-                    )}
-                </h2>
-                <ol>
-                    {recipeSteps.map((step, index) => (
-                        <li key={index} className={index === currentStep ? 'current-step' : ''}>
-                            {step}.
-                        </li>
-                    ))}
-                </ol>
-            </div>
+      <div className="recipe-detail-page">
+        <div className="title-and-favorites">
+          <h1 className="recipe-title">{recipe.strMeal}</h1>
+          <button className="favorite-button-large" onClick={handleFavoriteToggle}>
+            {isCurrentRecipeFavorited
+              ? <FaHeart className="favorite-icon favorited" size={30} />
+              : <FaRegHeart className="favorite-icon" size={30} />}
+          </button>
         </div>
+
+        <div className="recipe-meta">
+          <span><strong>Category:</strong> {recipe.strCategory}</span>
+          <span><strong>Cuisine:</strong> {recipe.strArea}</span>
+        </div>
+
+        <div className="recipe-layout">
+          <img src={recipe.strMealThumb} alt={recipe.strMeal} className="recipe-image" referrerPolicy="no-referrer" />
+          <div className="recipe-ingredients">
+            <h2>Ingredients</h2>
+            <ul>
+              {getIngredients(recipe).map((ing, index) => (
+                <li key={index}>{ing}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="recipe-instructions">
+          <h2>
+            Instructions
+            {assistant.hasSpeechSupport && (
+              <button
+                className={`mic-button ${assistant.isListening ? 'listening' : ''}`}
+                onClick={activateAssistant}
+                title="Activate Voice Assistant"
+              >
+                <FaMicrophone />
+              </button>
+            )}
+            {assistant.isListening && (
+              <span className="voice-command-hint">
+                Say: "start", "pause", "continue", "repeat", or "stop"
+              </span>
+            )}
+          </h2>
+
+          <div className="voice-controls">
+            <button className="voice-btn start" onClick={handleStartClick}>Start</button>
+            <button className="voice-btn pause" onClick={handlePauseClick}>Pause</button>
+            <button className="voice-btn resume" onClick={handleResumeClick}>Resume</button>
+            <button className="voice-btn stop" onClick={handleStopClick}>Stop</button>
+          </div>
+
+          <ol>
+            {recipeSteps.map((step, index) => (
+              <li key={index} className={index === currentStep ? 'current-step' : ''}>
+                {step}.
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
     );
-};
+  };
 
 export default RecipeDetailPage;

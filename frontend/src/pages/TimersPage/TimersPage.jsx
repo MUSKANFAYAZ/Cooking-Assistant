@@ -1,30 +1,68 @@
 import React, { useState, useEffect } from 'react'; // 1. Import useEffect
 import Timer from '../../components/Timer/Timer';
 import './TimersPage.css';
+import { useAuth } from '../../context/AuthContext';
+import { getUserTimers as apiGetUserTimers, setUserTimers as apiSetUserTimers } from '../../services/apiService';
 
 const TimersPage = () => {
-  // 2. Load initial timers from localStorage
-  const [timers, setTimers] = useState(() => {
-    try {
-      const savedTimers = localStorage.getItem('timers');
-      return savedTimers ? JSON.parse(savedTimers) : [];
-    } catch (error) {
-      console.error("Could not load timers from localStorage", error);
-      return [];
-    }
-  });
+  const { currentUser } = useAuth();
+
+  // Initialize empty; we'll load from server if logged in, else from localStorage
+  const [timers, setTimers] = useState([]);
 
   const [timerName, setTimerName] = useState('');
   const [timerMinutes, setTimerMinutes] = useState(10);
 
-  // 3. Save timers to localStorage whenever they change
+  // Save timers to localStorage only for guests (not logged in)
   useEffect(() => {
+    if (currentUser) return; // don't write to localStorage for authenticated users
     try {
       localStorage.setItem('timers', JSON.stringify(timers));
     } catch (error) {
-      console.error("Could not save timers to localStorage", error);
+      console.error('Could not save guest timers to localStorage', error);
     }
-  }, [timers]); // This effect runs every time the 'timers' array is updated
+  }, [timers, currentUser]);
+
+  // 3b. If logged in, load timers from backend on login/change
+  useEffect(() => {
+    const load = async () => {
+      if (currentUser) {
+        try {
+          const serverTimers = await apiGetUserTimers();
+          if (Array.isArray(serverTimers)) {
+            setTimers(serverTimers);
+          } else {
+            setTimers([]);
+          }
+        } catch (e) {
+          console.warn('Failed to load timers from server:', e?.message || e);
+        }
+      } else {
+        // Guest mode: load from localStorage
+        try {
+          const savedTimers = localStorage.getItem('timers');
+          setTimers(savedTimers ? JSON.parse(savedTimers) : []);
+        } catch (error) {
+          console.error('Could not load guest timers from localStorage', error);
+          setTimers([]);
+        }
+      }
+    };
+    load();
+  }, [currentUser]);
+
+  // 3c. If logged in, persist timers to backend whenever they change
+  useEffect(() => {
+    const save = async () => {
+      if (!currentUser) return;
+      try {
+        await apiSetUserTimers(timers);
+      } catch (e) {
+        console.warn('Failed to save timers to server:', e?.message || e);
+      }
+    };
+    save();
+  }, [timers, currentUser]);
 
   const addTimer = (e) => {
     e.preventDefault();

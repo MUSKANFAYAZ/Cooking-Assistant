@@ -14,12 +14,15 @@ export const useSpeechAssistant = () => {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.lang = 'en-US';
-    recognition.interimResults = false;
+    // Enable interim results so commands are captured faster (before finalization)
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
     
     recognition.onresult = (event) => {
+      // Use the most recent chunk (may be interim) for snappy responsiveness
       const last = event.results.length - 1;
-      const command = event.results[last][0].transcript.trim().toLowerCase();
-      setTranscript(command);
+      const chunk = event.results[last][0].transcript.trim().toLowerCase();
+      if (chunk) setTranscript(chunk);
     };
 
     recognition.onend = () => {
@@ -32,10 +35,12 @@ export const useSpeechAssistant = () => {
   }, [isListening]);
 
   const startListening = () => {
-    if (recognitionRef.current && !isListening) {
-      recognitionRef.current.start();
-      setIsListening(true);
-    }
+    const r = recognitionRef.current;
+    if (!r) return;
+    try { r.stop(); } catch {}
+    try { r.abort(); } catch {}
+    if (!isListening) setIsListening(true);
+    r.start();
   };
 
   const stopListening = () => {
@@ -44,7 +49,7 @@ export const useSpeechAssistant = () => {
       setIsListening(false);
     }
   };
-
+  
   const speak = ({ text, onEnd }) => {
     if (window.speechSynthesis.speaking) {
       window.speechSynthesis.cancel();

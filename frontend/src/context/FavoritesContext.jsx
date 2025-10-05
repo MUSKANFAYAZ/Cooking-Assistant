@@ -9,7 +9,7 @@ const FavoritesContext = createContext();
 export const useFavorites = () => useContext(FavoritesContext);
 
 export const FavoritesProvider = ({ children }) => {
-    // Store the full populated recipe objects (for FavoritesPage rendering)
+    // Store populated Recipe docs from backend (with _id, externalId, name, image, etc.)
     const [favorites, setFavorites] = useState([]); 
     const { currentUser } = useAuth();
     
@@ -23,7 +23,6 @@ export const FavoritesProvider = ({ children }) => {
         const fetchFavorites = async () => {
             try {
                 const profile = await getProfile(); 
-                // Set the state with the full array of recipe objects
                 setFavorites(profile.favorites || []); 
             } catch (err) {
                 console.error('Failed to fetch favorites', err);
@@ -32,27 +31,33 @@ export const FavoritesProvider = ({ children }) => {
         fetchFavorites();
     }, [currentUser]);
     
-    // --- Consolidated Toggle Logic ---
-    const handleToggleFavorite = async (recipeId) => {
-        // Now strictly accepts and uses the recipeId
-        if (!recipeId || !currentUser) return;
-        
+    // --- Toggle logic using externalId and upsert payload ---
+    const toggleFavorite = async (recipe) => {
+        if (!recipe || !currentUser) return;
+
+        const externalId = recipe.id || recipe.externalId; // MealDB id or stored externalId
+        if (!externalId) return;
+
+        // Minimal payload for upsert on backend
+        const payload = {
+            name: recipe.name || recipe.strMeal,
+            image: recipe.image || recipe.strMealThumb,
+            cuisine: recipe.cuisine || recipe.strArea,
+            category: recipe.category || recipe.strCategory,
+        };
+
         try {
-            const result = await apiToggleFavorite(recipeId);
-            
-            // Update local state with the new list returned from the backend
-            setFavorites(result.favorites); 
-            
+            const result = await apiToggleFavorite(externalId, payload);
+            setFavorites(result.favorites || []);
         } catch (error) {
-            console.error("Error toggling favorite:", error);
+            console.error('Error toggling favorite:', error);
         }
     };
     
     // --- Helper Function ---
-    const isFavorited = (recipeId) => {
-        // Accepts the recipeId (string) and checks against the objects' _id
-        if (!recipeId) return false;
-        return favorites.some(recipe => recipe._id === recipeId); 
+    const isFavorited = (externalId) => {
+        if (!externalId) return false;
+        return favorites.some(recipe => recipe.externalId === externalId);
     };
 
     // --- Context Value ---
@@ -61,11 +66,7 @@ export const FavoritesProvider = ({ children }) => {
             value={{ 
                 favorites, 
                 isFavorited, 
-                // CRUCIAL CHANGE: Expose handlers that only take the ID string
-                // RecipeCard will need to be updated slightly to pass the ID directly.
-                // We use the simpler version here for maximum compatibility:
-                addFavorite: handleToggleFavorite, 
-                removeFavorite: handleToggleFavorite, 
+                toggleFavorite,
             }}
         >
             {children}

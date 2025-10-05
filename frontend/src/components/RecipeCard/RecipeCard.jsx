@@ -18,27 +18,23 @@ const slugify = (text) => {
 
 const RecipeCard = ({ recipe }) => {
   const navigate = useNavigate();
-  const { addFavorite, removeFavorite, isFavorited } = useFavorites();
+  const { toggleFavorite, isFavorited } = useFavorites();
   
-  // Destructure MongoDB _id instead of id
-  const { _id, image, cuisine, name, stores } = recipe;
-  const recipeId = _id || id;
+  // Support both external API shape (id) and backend shape (externalId, _id)
+  const { _id, image, cuisine, name } = recipe;
+  const externalId = recipe.id || recipe.externalId;
 
   // Check if this recipe is favorited
-  const favorited = isFavorited(recipeId);
+  const favorited = isFavorited(externalId);
 
   const handleFavoriteClick = (e) => {
     e.stopPropagation(); // Prevent navigating to recipe page
-    if (favorited) {
-      removeFavorite(recipeId); // Remove by ID
-    } else {
-      addFavorite(recipeId);  // Optional extra info
-    }
+    toggleFavorite(recipe);
   };
 
   const handleNavigate = () => {
     const slug = slugify(name);
-    navigate(`/recipe/${recipeId}/${slug}`);
+    navigate(`/recipe/${externalId}/${slug}`);
   };
 
   return (

@@ -40,13 +40,13 @@ export const getProfile = async () => {
         headers: { 
             // Ensures the JWT is correctly added
             Authorization: `Bearer ${token}` 
-        } 
+        }
     };
 
     try {
         // FIX: Ensure the path starts with the correct router prefix. 
         // We explicitly use the plural 'users' here.
-        const response = await apiClient.get('/user/profile', config); 
+        const response = await apiClient.get('/users/profile', config); 
         
         return response.data;
     } catch (error) {
@@ -57,7 +57,7 @@ export const getProfile = async () => {
 };
 
 // Consolidated function to toggle favorite status
-export const apiToggleFavorite = async (recipeId) => {
+export const apiToggleFavorite = async (recipeId, payload = {}) => {
     // Now strictly accepts and uses only the recipeId
     const token = getToken();
     if (!token) throw new Error("Authentication token not found.");
@@ -65,17 +65,14 @@ export const apiToggleFavorite = async (recipeId) => {
     const config = { headers: { Authorization: `Bearer ${token}` } };
     
     // POST to the URL with the recipeId parameter
-    const response = await apiClient.post(`/users/favorites/toggle/${recipeId}`, {}, config);
-    
+    const response = await apiClient.post(`/users/favorites/toggle/${recipeId}`, payload, config);
     // Returns: { message, isFavorited, favorites: [...] }
     return response.data; 
 };
 
-// --- THEMEALDB API FUNCTIONS ---
-
 
 const normalizeMealDbRecipe = (meal) => ({
-  id: meal.idMeal, 
+  id: meal.idMeal,
   name: meal.strMeal,
   image: meal.strMealThumb,
 });
@@ -99,20 +96,31 @@ export const fetchRecipesByCategory = async (categoryName) => {
 
 export const fetchRecipeById = async (recipeId) => {
   if (!recipeId) {
-        console.error("fetchRecipeById called with null/undefined ID.");
-        return null;
-    }
-    
-    // MealDB uses 'lookup.php?i=' for ID lookup
-    const response = await mealDbClient.get(`lookup.php?i=${recipeId}`);
-    
-    // The MealDB API returns a 'meals' array, which is null if not found.
-    // We return the first item in the array or null.
-     return response.data.meals ? response.data.meals[0] : null;
+    console.error('fetchRecipeById called with null/undefined ID.');
+    return null;
+  }
+  const response = await mealDbClient.get(`lookup.php?i=${recipeId}`);
+  return response.data.meals ? response.data.meals[0] : null;
 };
 
 export const fetchRecipesByFirstLetter = async (letter) => {
   const response = await mealDbClient.get(`search.php?f=${letter}`);
   const meals = response.data.meals;
   return meals ? meals.map(normalizeMealDbRecipe) : [];
+};
+
+// --- TIMERS (Per-user persistence) ---
+export const getUserTimers = async () => {
+  const token = getToken();
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  const res = await apiClient.get('/users/timers', config);
+  return res.data?.timers || [];
+};
+
+export const setUserTimers = async (timers) => {
+  const token = getToken();
+  if (!token) throw new Error('Authentication token not found.');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  const res = await apiClient.put('/users/timers', { timers }, config);
+  return res.data?.timers || [];
 };
