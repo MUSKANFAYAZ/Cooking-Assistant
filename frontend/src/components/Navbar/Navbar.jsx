@@ -1,4 +1,3 @@
-import React from 'react';
 import './Navbar.css';
 import { FaHeart, FaHome, FaUserCircle } from 'react-icons/fa';
 import { MdTimer, MdKeyboardVoice, MdOutlineRestaurantMenu } from 'react-icons/md';
